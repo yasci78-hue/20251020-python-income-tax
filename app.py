@@ -1,133 +1,133 @@
-import streamlit as st
+ï»¿import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-st.set_page_config(page_title="¿µ¼¼À² ÆÇº° °Ë»ö µµ±¸", layout="wide")
+st.set_page_config(page_title="ì˜ì„¸ìœ¨ íŒë³„ ê²€ìƒ‰ ë„êµ¬", layout="wide")
 
-st.title("¿µ¼¼À² ÆÇº° °Ë»ö µµ±¸")
-st.caption("Å°¿öµå¸¦ ÀÔ·ÂÇÏ¸é ÇØ´ç Ç°¸ñ°ú ºÐ·ù(»çÈÄÈ¯±Þ½ÅÃ» / ¿µ¼¼À²TI ¼öÃë)¸¦ Ã£¾ÆÁÝ´Ï´Ù.")
+st.title("ì˜ì„¸ìœ¨ íŒë³„ ê²€ìƒ‰ ë„êµ¬")
+st.caption("í‚¤ì›Œë“œë¥¼ ìž…ë ¥í•˜ë©´ í•´ë‹¹ í’ˆëª©ê³¼ ë¶„ë¥˜(ì‚¬í›„í™˜ê¸‰ì‹ ì²­ / ì˜ì„¸ìœ¨TI ìˆ˜ì·¨)ë¥¼ ì°¾ì•„ì¤ë‹ˆë‹¤.")
 
-# --- ÆÄÀÏ ·Îµå ¿µ¿ª ---
-default_path = "/mnt/data/¿µ¼¼À²ÆÇº°.xlsx"  # ¾÷·ÎµåÇÑ ±âº» °æ·Î
-uploaded = st.file_uploader("¿¢¼¿ ÆÄÀÏ ¾÷·Îµå (.xlsx)", type=["xlsx"])
+# --- íŒŒì¼ ë¡œë“œ ì˜ì—­ ---
+default_path = "/mnt/data/ì˜ì„¸ìœ¨íŒë³„.xlsx"  # ì—…ë¡œë“œí•œ ê¸°ë³¸ ê²½ë¡œ
+uploaded = st.file_uploader("ì—‘ì…€ íŒŒì¼ ì—…ë¡œë“œ (.xlsx)", type=["xlsx"])
 path_info = st.empty()
 
 @st.cache_data(show_spinner=False)
 def load_excel(fileobj_or_path):
-    # ÆÄÀÏ °æ·Î ¶Ç´Â ¾÷·Îµå ÆÄÀÏ ¸ðµÎ Áö¿ø
+    # íŒŒì¼ ê²½ë¡œ ë˜ëŠ” ì—…ë¡œë“œ íŒŒì¼ ëª¨ë‘ ì§€ì›
     if isinstance(fileobj_or_path, str):
         df = pd.read_excel(fileobj_or_path, sheet_name=0)
     else:
         df = pd.read_excel(fileobj_or_path, sheet_name=0)
 
-    # ¿­ Á¤¸®: ¿ì¸®°¡ È®ÀÎÇÑ ±¸Á¶¿¡ ¸ÂÃç Ç¥ÁØÈ­
+    # ì—´ ì •ë¦¬: ìš°ë¦¬ê°€ í™•ì¸í•œ êµ¬ì¡°ì— ë§žì¶° í‘œì¤€í™”
     cols = list(df.columns)
-    # Ç°¸ñ ÈÄº¸ ¿­ Ã£±â (±âº»: 'Unnamed: 1')
+    # í’ˆëª© í›„ë³´ ì—´ ì°¾ê¸° (ê¸°ë³¸: 'Unnamed: 1')
     item_col = None
     if "Unnamed: 1" in cols:
         item_col = "Unnamed: 1"
     else:
-        # ÈÞ¸®½ºÆ½: ¹®ÀÚ¿­ ±æÀÌ°¡ ±ä object ¿­À» Ç°¸ñÀ¸·Î °¡Á¤
+        # íœ´ë¦¬ìŠ¤í‹±: ë¬¸ìžì—´ ê¸¸ì´ê°€ ê¸´ object ì—´ì„ í’ˆëª©ìœ¼ë¡œ ê°€ì •
         object_cols = [c for c in cols if df[c].dtype == 'object']
         if object_cols:
-            # Æò±Õ ¹®ÀÚ¿­ ±æÀÌ °¡Àå ±ä ¿­ ¼±ÅÃ
+            # í‰ê·  ë¬¸ìžì—´ ê¸¸ì´ ê°€ìž¥ ê¸´ ì—´ ì„ íƒ
             avg_len = {c: df[c].dropna().astype(str).str.len().mean() for c in object_cols}
             item_col = max(avg_len, key=avg_len.get)
 
-    # ±¸ºÐ ¿­ Ã£±â (±âº»: '±¸ºÐ')
-    kind_col = "±¸ºÐ" if "±¸ºÐ" in cols else None
+    # êµ¬ë¶„ ì—´ ì°¾ê¸° (ê¸°ë³¸: 'êµ¬ë¶„')
+    kind_col = "êµ¬ë¶„" if "êµ¬ë¶„" in cols else None
 
-    # Ç¥ÁØ ÄÃ·³¸íÀ¸·Î ¸®³×ÀÓ
+    # í‘œì¤€ ì»¬ëŸ¼ëª…ìœ¼ë¡œ ë¦¬ë„¤ìž„
     rename_map = {}
-    if item_col and item_col != "Ç°¸ñ":
-        rename_map[item_col] = "Ç°¸ñ"
-    if kind_col and kind_col != "±¸ºÐ":
-        rename_map[kind_col] = "±¸ºÐ"
+    if item_col and item_col != "í’ˆëª©":
+        rename_map[item_col] = "í’ˆëª©"
+    if kind_col and kind_col != "êµ¬ë¶„":
+        rename_map[kind_col] = "êµ¬ë¶„"
 
     df = df.rename(columns=rename_map)
 
-    # ÃÖ¼Ò ÄÃ·³ À¯È¿¼º È®ÀÎ
-    if "Ç°¸ñ" not in df.columns:
-        raise ValueError("Ç°¸ñ ¿­À» Ã£Áö ¸øÇß½À´Ï´Ù. ¿¢¼¿¿¡¼­ Ç°¸ñÀÌ ÀÖ´Â ¿­À» 'Unnamed: 1' ¶Ç´Â ÅØ½ºÆ®°¡ ´ëºÎºÐÀÎ ¿­·Î ¸ÂÃçÁÖ¼¼¿ä.")
-    if "±¸ºÐ" not in df.columns:
-        # ±¸ºÐÀÌ ¾øÀ¸¸é ºó °ªÀ¸·Î »ý¼º(¿É¼Ç)
-        df["±¸ºÐ"] = ""
+    # ìµœì†Œ ì»¬ëŸ¼ ìœ íš¨ì„± í™•ì¸
+    if "í’ˆëª©" not in df.columns:
+        raise ValueError("í’ˆëª© ì—´ì„ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ì—‘ì…€ì—ì„œ í’ˆëª©ì´ ìžˆëŠ” ì—´ì„ 'Unnamed: 1' ë˜ëŠ” í…ìŠ¤íŠ¸ê°€ ëŒ€ë¶€ë¶„ì¸ ì—´ë¡œ ë§žì¶°ì£¼ì„¸ìš”.")
+    if "êµ¬ë¶„" not in df.columns:
+        # êµ¬ë¶„ì´ ì—†ìœ¼ë©´ ë¹ˆ ê°’ìœ¼ë¡œ ìƒì„±(ì˜µì…˜)
+        df["êµ¬ë¶„"] = ""
 
-    # Á¤¸®
-    df["Ç°¸ñ"] = df["Ç°¸ñ"].astype(str).str.strip()
-    df["±¸ºÐ"] = df["±¸ºÐ"].astype(str).str.strip()
-    return df[["Ç°¸ñ", "±¸ºÐ"]]
+    # ì •ë¦¬
+    df["í’ˆëª©"] = df["í’ˆëª©"].astype(str).str.strip()
+    df["êµ¬ë¶„"] = df["êµ¬ë¶„"].astype(str).str.strip()
+    return df[["í’ˆëª©", "êµ¬ë¶„"]]
 
-# ÆÄÀÏ ¼±ÅÃ
+# íŒŒì¼ ì„ íƒ
 if uploaded is not None:
     df = load_excel(uploaded)
-    path_info.info("¾÷·ÎµåÇÑ ÆÄÀÏÀ» »ç¿ë ÁßÀÔ´Ï´Ù.")
+    path_info.info("ì—…ë¡œë“œí•œ íŒŒì¼ì„ ì‚¬ìš© ì¤‘ìž…ë‹ˆë‹¤.")
 else:
-    # ±âº» °æ·Î »ç¿ë (·ÎÄÃ/¼­¹ö È¯°æ¿¡ ÀÌ °æ·Î°¡ ¾øÀ» ¼öµµ ÀÖÀ¸´Ï ¿¹¿ÜÃ³¸®)
+    # ê¸°ë³¸ ê²½ë¡œ ì‚¬ìš© (ë¡œì»¬/ì„œë²„ í™˜ê²½ì— ì´ ê²½ë¡œê°€ ì—†ì„ ìˆ˜ë„ ìžˆìœ¼ë‹ˆ ì˜ˆì™¸ì²˜ë¦¬)
     try:
         df = load_excel(default_path)
-        path_info.info(f"±âº» ÆÄÀÏ »ç¿ë Áß: {default_path}")
+        path_info.info(f"ê¸°ë³¸ íŒŒì¼ ì‚¬ìš© ì¤‘: {default_path}")
     except Exception as e:
-        st.warning("±âº» °æ·ÎÀÇ ÆÄÀÏÀ» ºÒ·¯¿Ã ¼ö ¾ø½À´Ï´Ù. »ó´Ü¿¡¼­ ¿¢¼¿À» ¾÷·Îµå ÇØÁÖ¼¼¿ä.")
+        st.warning("ê¸°ë³¸ ê²½ë¡œì˜ íŒŒì¼ì„ ë¶ˆëŸ¬ì˜¬ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ìƒë‹¨ì—ì„œ ì—‘ì…€ì„ ì—…ë¡œë“œ í•´ì£¼ì„¸ìš”.")
         st.stop()
 
-# --- °Ë»ö UI ---
+# --- ê²€ìƒ‰ UI ---
 with st.container():
     col1, col2 = st.columns([2, 1])
     with col1:
-        query = st.text_input("°Ë»ö¾î ÀÔ·Â (¿¹: ¼Òµ¶±â, ÇÊ¸§, ÆßÇÁ ...)", value="")
+        query = st.text_input("ê²€ìƒ‰ì–´ ìž…ë ¥ (ì˜ˆ: ì†Œë…ê¸°, í•„ë¦„, íŽŒí”„ ...)", value="")
     with col2:
-        case_sensitive = st.checkbox("´ë¼Ò¹®ÀÚ ±¸ºÐ", value=False)
+        case_sensitive = st.checkbox("ëŒ€ì†Œë¬¸ìž êµ¬ë¶„", value=False)
 
-# --- °Ë»ö ·ÎÁ÷ ---
+# --- ê²€ìƒ‰ ë¡œì§ ---
 def search(df, q, case_sensitive=False):
     if not q:
         return df.copy()
-    # ½°Ç¥·Î ¿©·¯ Å°¿öµå Áö¿ø: "¼Òµ¶±â, ÇÊ¸§"
+    # ì‰¼í‘œë¡œ ì—¬ëŸ¬ í‚¤ì›Œë“œ ì§€ì›: "ì†Œë…ê¸°, í•„ë¦„"
     tokens = [t.strip() for t in q.split(",") if t.strip()]
     if not tokens:
         return df.copy()
 
-    # contains Á¶°ÇÀ» ¸ðµÎ AND·Î ¹­±â (ÇÊ¿ä ½Ã OR ·ÎÁ÷À¸·Î º¯°æ °¡´É)
+    # contains ì¡°ê±´ì„ ëª¨ë‘ ANDë¡œ ë¬¶ê¸° (í•„ìš” ì‹œ OR ë¡œì§ìœ¼ë¡œ ë³€ê²½ ê°€ëŠ¥)
     res = df.copy()
     for t in tokens:
         if case_sensitive:
-            res = res[res["Ç°¸ñ"].str.contains(t, na=False)]
+            res = res[res["í’ˆëª©"].str.contains(t, na=False)]
         else:
-            res = res[res["Ç°¸ñ"].str.contains(t, case=False, na=False)]
+            res = res[res["í’ˆëª©"].str.contains(t, case=False, na=False)]
     return res
 
 results = search(df, query, case_sensitive=case_sensitive)
 
-# --- ¿ä¾à ---
+# --- ìš”ì•½ ---
 left, right = st.columns([2, 1])
 with right:
-    st.subheader("ºÐ·ùº° °³¼ö")
-    if "±¸ºÐ" in results.columns:
-        st.dataframe(results["±¸ºÐ"].value_counts(dropna=False).rename("°Ç¼ö").to_frame())
+    st.subheader("ë¶„ë¥˜ë³„ ê°œìˆ˜")
+    if "êµ¬ë¶„" in results.columns:
+        st.dataframe(results["êµ¬ë¶„"].value_counts(dropna=False).rename("ê±´ìˆ˜").to_frame())
 
 with left:
-    st.subheader("°Ë»ö °á°ú")
-    st.caption("Ç°¸ñÀ» Å¬¸¯ÇØ ÀüÃ¼ ÅØ½ºÆ®¸¦ È®ÀÎÇÏ¼¼¿ä.")
+    st.subheader("ê²€ìƒ‰ ê²°ê³¼")
+    st.caption("í’ˆëª©ì„ í´ë¦­í•´ ì „ì²´ í…ìŠ¤íŠ¸ë¥¼ í™•ì¸í•˜ì„¸ìš”.")
     st.dataframe(results, use_container_width=True, height=480)
 
-# --- ´Ù¿î·Îµå ---
+# --- ë‹¤ìš´ë¡œë“œ ---
 def to_csv_bytes(dataframe: pd.DataFrame) -> bytes:
     return dataframe.to_csv(index=False).encode("utf-8-sig")
 
 csv_bytes = to_csv_bytes(results)
 st.download_button(
-    label="°Ë»ö °á°ú CSV ´Ù¿î·Îµå",
+    label="ê²€ìƒ‰ ê²°ê³¼ CSV ë‹¤ìš´ë¡œë“œ",
     data=csv_bytes,
-    file_name="°Ë»ö°á°ú.csv",
+    file_name="ê²€ìƒ‰ê²°ê³¼.csv",
     mime="text/csv",
 )
 
-# --- µµ¿ò¸»/ÆÁ ---
-with st.expander("°Ë»ö ÆÁ"):
+# --- ë„ì›€ë§/íŒ ---
+with st.expander("ê²€ìƒ‰ íŒ"):
     st.markdown("""
-- ¿©·¯ Å°¿öµå´Â ½°Ç¥(,)·Î ±¸ºÐÇØ¼­ ÀÔ·ÂÇÏ¼¼¿ä. ¿¹: `¼Òµ¶±â, ¾ç½ÄÀå`
-- ÇöÀç´Â **Ç°¸ñ ³» Æ÷ÇÔ °Ë»ö**(ºÎºÐ ÀÏÄ¡) ±âÁØÀÔ´Ï´Ù.
-- ±âº» ·ÎÁ÷Àº **AND °Ë»ö**À¸·Î, ÀÔ·ÂÇÑ ¸ðµç Å°¿öµå¸¦ Æ÷ÇÔÇÏ´Â Ç×¸ñ¸¸ º¸¿©ÁÝ´Ï´Ù.
-    - OR °Ë»öÀÌ ÇÊ¿äÇÏ¸é, Å°¿öµå ÇÏ³ª¾¿ °Ë»öÇÏ°Å³ª ÄÚµåÀÇ `search` ÇÔ¼ö¸¦ °£´ÜÈ÷ ¼öÁ¤ÇÏ¼¼¿ä.
+- ì—¬ëŸ¬ í‚¤ì›Œë“œëŠ” ì‰¼í‘œ(,)ë¡œ êµ¬ë¶„í•´ì„œ ìž…ë ¥í•˜ì„¸ìš”. ì˜ˆ: `ì†Œë…ê¸°, ì–‘ì‹ìž¥`
+- í˜„ìž¬ëŠ” **í’ˆëª© ë‚´ í¬í•¨ ê²€ìƒ‰**(ë¶€ë¶„ ì¼ì¹˜) ê¸°ì¤€ìž…ë‹ˆë‹¤.
+- ê¸°ë³¸ ë¡œì§ì€ **AND ê²€ìƒ‰**ìœ¼ë¡œ, ìž…ë ¥í•œ ëª¨ë“  í‚¤ì›Œë“œë¥¼ í¬í•¨í•˜ëŠ” í•­ëª©ë§Œ ë³´ì—¬ì¤ë‹ˆë‹¤.
+    - OR ê²€ìƒ‰ì´ í•„ìš”í•˜ë©´, í‚¤ì›Œë“œ í•˜ë‚˜ì”© ê²€ìƒ‰í•˜ê±°ë‚˜ ì½”ë“œì˜ `search` í•¨ìˆ˜ë¥¼ ê°„ë‹¨ížˆ ìˆ˜ì •í•˜ì„¸ìš”.
 """)
