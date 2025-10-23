@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import requests, base64
@@ -23,7 +23,7 @@ input[type=text], textarea, .stTextInput input { font-size: 18px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("영세율 판별 검색 도구")
+st.title("기자재 영세율 판별 도구")
 st.caption("키워드를 입력하면 해당 품목과 분류(사후환급신청 / 영세율TI 수취)를 찾아줍니다.")
 
 # ==============================
@@ -185,3 +185,103 @@ st.download_button(
 )
 
 st.caption("데이터 출처(기본): GitHub raw URL - https://raw.githubusercontent.com/yasci78-hue/20251020-python-income-tax/main/%EC%98%81%EC%84%B8%EC%9C%A8%ED%8C%90%EB%B3%84.xlsx")
+
+# ==============================
+# AI 챗봇 (앱 하단에 부착)
+# ==============================
+with st.sidebar:
+    st.header("AI 챗봇")
+
+import os
+import streamlit as st
+
+try:
+    from openai import OpenAI
+    _openai_ok = True
+except Exception:
+    _openai_ok = False
+
+st.divider()
+st.subheader("AI 챗봇 (영세율/검색 도움)")
+
+# 세션 상태에 히스토리 보관
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = [
+        {"role": "system", "content": (
+            "너는 국세/영세율 판별 검색 도우미야. "
+            "사용자가 위의 검색 도구를 사용하며 궁금한 점을 물으면, "
+            "친절하게 한국어로 간결하게 답해줘. "
+            "가능하면 앱의 검색 기능(키워드, AND/OR, 대소문자 옵션) 사용 팁을 함께 제안해."
+        )}
+    ]
+
+# 키 확인: 시크릿 > 환경변수 순
+OPENAI_API_KEY = (
+    st.secrets.get("openai", {}).get("api_key")
+    or os.environ.get("OPENAI_API_KEY")
+)
+
+if not _openai_ok:
+    st.info("openai 패키지가 필요합니다. requirements.txt에 `openai>=1.40`을 추가하세요.")
+elif not OPENAI_API_KEY:
+    st.warning("OpenAI API 키가 설정되어 있지 않습니다. Streamlit Secrets에 [openai][api_key]를 저장하거나 환경변수 OPENAI_API_KEY를 설정하세요.")
+else:
+    client = OpenAI(api_key=OPENAI_API_KEY)
+
+    # 기존 대화 렌더링 (system 제외)
+    for m in st.session_state.chat_messages:
+        if m["role"] == "system":
+            continue
+        with st.chat_message(m["role"]):
+            st.markdown(m["content"])
+
+    # 입력창
+    user_input = st.chat_input("무엇이든 물어보세요. (예: '의료용 소독기 검색 팁 알려줘')")
+    if user_input:
+        # 사용자 메시지 추가/표시
+        st.session_state.chat_messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
+
+        # 모델 호출 (Responses API 권장) — 스트리밍
+        # 참고: https://platform.openai.com/docs/api-reference/responses
+        with st.chat_message("assistant"):
+            placeholder = st.empty()
+            streamed_text = ""
+
+            try:
+                # 최신 가이드의 Responses API 스트리밍 예시를 따릅니다.
+                # (Responses vs Chat Completions 비교: migrate 가이드 참조)
+                # https://platform.openai.com/docs/guides/migrate-to-responses
+                with client.responses.stream(
+                    model="gpt-5",  # 필요시 gpt-5-mini 등으로 조정
+                    input=[{"role": m["role"], "content": m["content"]} for m in st.session_state.chat_messages]
+                ) as stream:
+                    for event in stream:
+                        if event.type == "response.output_text.delta":
+                            streamed_text += event.delta
+                            placeholder.markdown(streamed_text)
+                    # 스트림 종료시 최종 텍스트 얻기
+                    final = stream.get_final_response()
+                    assistant_text = final.output_text
+            except Exception:
+                # 일부 환경에서는 Chat Completions가 더 친숙할 수 있어 폴백 제공
+                # https://platform.openai.com/docs/guides/text-generation/chat-completions-api
+                chat_msgs = [{"role": m["role"], "content": m["content"]} for m in st.session_state.chat_messages]
+                resp = client.chat.completions.create(
+                    model="gpt-5",
+                    messages=chat_msgs,
+                    stream=True,
+                )
+                assistant_text = ""
+                for chunk in resp:
+                    delta = getattr(chunk.choices[0].delta, "content", None)
+                    if delta:
+                        assistant_text += delta
+                        placeholder.markdown(assistant_text)
+
+            # 답변 확정 & 히스토리에 추가
+            st.session_state.chat_messages.append({"role": "assistant", "content": assistant_text})
+            placeholder.markdown(assistant_text)
+
+st.caption("💡 팁: 검색창에 쉼표(,)로 여러 키워드를 넣고 AND/OR를 바꿔 보세요. 결과는 위 표와 CSV로 내려받을 수 있어요.")
