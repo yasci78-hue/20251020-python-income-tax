@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 검색창과 챗봇만 보이게 (강제 숨김 CSS 포함)
 - 데이터 불러오기 UI는 코드상 제거 + CSS로도 1차/2차 방어
@@ -11,22 +11,28 @@ import pandas as pd
 import streamlit as st
 
 # ==============================
-# 전역 CSS: 혹시 남아있는 selectbox/text_input/성공 메시지를 강제로 숨김
-# (첫 번째 selectbox / 첫 번째 text input / 첫 번째 success alert)
+# 전역 CSS (데이터 로딩 UI만 숨기고 검색창은 살리기)
 # ==============================
 st.markdown(
     """
     <style>
-      /* 가장 앞쪽 Selectbox (= 데이터 불러오기 방식) 숨김 */
-      div[data-testid="stSelectbox"]:first-of-type { display: none !important; }
-      /* 가장 앞쪽 TextInput (= raw.githubusercontent.com 링크) 숨김 */
-      div[data-testid="stTextInput"]:first-of-type { display: none !important; }
-      /* 가장 앞쪽 Alert (= '성공!' 메시지) 숨김 */
-      div[role="alert"]:first-of-type { display: none !important; }
+      /* '데이터 불러오기 방식' Selectbox만 숨김 */
+      div[data-testid="stSelectbox"] label:contains("데이터 불러오기 방식") {
+          display: none !important;
+      }
+      /* 'raw.githubusercontent.com 링크' TextInput 숨김 */
+      div[data-testid="stTextInput"] label:contains("raw.githubusercontent.com 링크") {
+          display: none !important;
+      }
+      /* 'GitHub raw URL에서 데이터 불러오기 성공' 알림 숨김 */
+      div[role="alert"]:has(p:contains("GitHub raw URL에서 데이터 불러오기 성공")) {
+          display: none !important;
+      }
     </style>
     """,
     unsafe_allow_html=True
 )
+
 
 # ==============================
 # 기본 설정
