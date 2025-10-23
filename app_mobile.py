@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import requests
@@ -8,7 +8,7 @@ from io import BytesIO
 # 페이지/레이아웃 설정 (모바일 최적화)
 # ==============================
 st.set_page_config(
-    page_title="영세율 판별 검색 도구",
+    page_title="농업 등 기자재 영세율 판별",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -16,15 +16,15 @@ st.set_page_config(
 # 글로벌 CSS (폰트/버튼/입력창 크게)
 st.markdown("""
 <style>
-html, body, [class*="css"] { font-size: 18px !important; }
-.dataframe td, .dataframe th { font-size: 16px !important; }
-.stButton > button { width: 100%; height: 3em; font-size: 18px; }
-input[type=text], textarea, .stTextInput input { font-size: 18px !important; }
+html, body, [class*="css"] { font-size: 16px !important; }
+.dataframe td, .dataframe th { font-size: 14px !important; }
+.stButton > button { width: 100%; height: 3em; font-size: 16px; }
+input[type=text], textarea, .stTextInput input { font-size: 16px !important; }
 </style>
 """, unsafe_allow_html=True)
 
 st.title("영세율 판별 검색 도구")
-st.caption("키워드를 입력하면 해당 품목과 분류(사후환급신청 / 영세율TI 수취)를 찾아줍니다.")
+st.caption("키워드를 입력하면 [사후환급신청 / 영세율TI 수취] 대상이 분류됩니다.")
 
 # ==============================
 # 데이터 로딩 유틸 (UI 미노출 - 자동 로드)
