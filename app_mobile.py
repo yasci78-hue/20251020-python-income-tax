@@ -24,7 +24,7 @@ input[type=text], textarea, .stTextInput input { font-size: 16px !important; }
 """, unsafe_allow_html=True)
 
 st.caption("별표 글씨가 보입니까? 안경 벗는다고 보입니까? 그냥 여기 검색하이소!")
-st.subheader("of the 노안, by the 노안, for the 노안")
+st.subheader("노안의 그대를 위하여!!")
 st.title("영세율 판별 도구")
 st.caption("키워드 입력시 농업등 기자재의 [사후환급 / 영세율TI 수취] 대상이 분류됩니다.")
 
@@ -133,4 +133,4 @@ st.download_button(
 
 st.caption("데이터는 고정된 GitHub raw URL에서 자동 로드됩니다.")
 
-st.subheader("내쇼날 택스 써비쓰---- 포항 디쓰트릭뜨 오피스")
+st.subheader("포항세무서 직원이 만든 것이 아닙니다.")
