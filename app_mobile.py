@@ -85,6 +85,17 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
 # ==============================
 # 데이터 소스 선택 (모바일 친화: selectbox)
 # ==============================
+# ⚙️ 데이터 불러오기 섹션 숨김 옵션
+SHOW_DATA_SECTION = False  # True면 보이고, False면 숨김
+
+if SHOW_DATA_SECTION:
+    st.subheader("데이터 불러오기")
+    load_option = st.selectbox("데이터 불러오기 방식", ["GitHub raw URL (공개)", "직접 업로드"])
+    url = st.text_input("raw.githubusercontent.com 링크")
+    if url:
+        st.success("GitHub raw URL에서 데이터 불러오기 성공!")
+
+
 source = st.selectbox(
     "데이터 불러오기 방식",
     ["GitHub raw URL (공개)", "로컬 업로드", "GitHub API (비공개)"],
