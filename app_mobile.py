@@ -133,4 +133,4 @@ st.download_button(
 
 st.caption("데이터는 고정된 GitHub raw URL에서 자동 로드됩니다.")
 
-st.subheader("포항세무서 직원이 만든 것이 아닙니다.")
+st.subheader("포항세무서 직원 아님.")
