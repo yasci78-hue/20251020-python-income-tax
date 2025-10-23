@@ -23,8 +23,8 @@ input[type=text], textarea, .stTextInput input { font-size: 16px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("영세율 판별 검색 도구")
-st.caption("키워드를 입력하면 [사후환급신청 / 영세율TI 수취] 대상이 분류됩니다.")
+st.title("영세율 판별 도구")
+st.caption("키워드 입력시 농업등 기자재의 [사후환급 / 영세율TI 수취] 대상이 분류됩니다.")
 
 # ==============================
 # 데이터 로딩 유틸 (UI 미노출 - 자동 로드)
