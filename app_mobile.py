@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import requests
@@ -13,13 +13,31 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 글로벌 CSS (폰트/버튼/입력창 크게)
+# 글로벌 CSS (폰트/버튼/입력창 크게 + 검색창 테두리/포커스 강조)
 st.markdown("""
 <style>
 html, body, [class*="css"] { font-size: 16px !important; }
 .dataframe td, .dataframe th { font-size: 14px !important; }
 .stButton > button { width: 100%; height: 3em; font-size: 16px; }
 input[type=text], textarea, .stTextInput input { font-size: 16px !important; }
+
+/* 검색창 시인성 강화 */
+.stTextInput input {
+    border: 2px solid #1f6feb !important;   /* 진한 테두리 */
+    border-radius: 10px !important;         /* 둥근 모서리 */
+    padding: 10px 12px !important;          /* 넉넉한 패딩 */
+    box-shadow: none !important;            /* 기본 값 초기화 */
+}
+.stTextInput input:focus {
+    outline: none !important;
+    border-color: #0d419d !important;       /* 포커스 색 */
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.25) !important; /* 포커스 글로우 */
+}
+/* placeholder 색 살짝 진하게 */
+.stTextInput input::placeholder {
+    color: #5a6c7d !important;
+    opacity: 1 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -85,11 +103,37 @@ except Exception as e:
     st.stop()
 
 # ==============================
-# 검색 UI
+# 검색 UI (Enter로 제출 + '검색' 버튼 추가)
 # ==============================
-query = st.text_input("검색어 입력 (쉼표로 여러 개, 예: 소독기, 필름, 펌프)", value="")
-mode_and_or = st.radio("검색 방식", ["AND", "OR"], index=0, horizontal=True)
-case_sensitive = st.toggle("대소문자 구분", value=False)
+# 기존 선택값 유지용 기본값 설정
+default_query = st.session_state.get("query", "")
+default_mode = st.session_state.get("mode_and_or", "AND")
+default_case = st.session_state.get("case_sensitive", False)
+
+with st.form("search_form", clear_on_submit=False):
+    # 입력과 옵션들을 하나의 form으로 묶어서 Enter로 제출되게 함
+    query = st.text_input(
+        "검색어 입력 (쉼표로 여러 개, 예: 소독기, 필름, 펌프)",
+        value=default_query,
+        placeholder="예: 비닐, 관수, 펌프"
+    )
+    col_opts1, col_opts2 = st.columns([1, 1], vertical_alignment="center")
+    with col_opts1:
+        mode_and_or = st.radio("검색 방식", ["AND", "OR"], index=0 if default_mode == "AND" else 1, horizontal=True)
+    with col_opts2:
+        case_sensitive = st.toggle("대소문자 구분", value=default_case)
+    submitted = st.form_submit_button("검색")
+
+# 폼 제출 시 상태 저장 (버튼 클릭 또는 Enter)
+if submitted:
+    st.session_state["query"] = query
+    st.session_state["mode_and_or"] = mode_and_or
+    st.session_state["case_sensitive"] = case_sensitive
+
+# 상태값 불러오기 (초기 렌더링 또는 제출 후)
+query = st.session_state.get("query", default_query)
+mode_and_or = st.session_state.get("mode_and_or", default_mode)
+case_sensitive = st.session_state.get("case_sensitive", default_case)
 
 def search(df, q, case_sensitive=False, mode="AND"):
     if not q:
@@ -132,5 +176,4 @@ st.download_button(
 )
 
 st.caption("데이터는 고정된 GitHub raw URL에서 자동 로드됩니다.")
-
 st.subheader("포항세무서 직원 아님.")
