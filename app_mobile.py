@@ -23,7 +23,7 @@ input[type=text], textarea, .stTextInput input { font-size: 16px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.caption("노안의 그대여! 별표의 작은 글자로부터 벗어나자 !")
+st.caption("노안의 그대여! 언제까지 별표의 작은 글씨를 노려볼 것인가?")
 st.title("영세율 판별 도구")
 st.caption("키워드 입력시 농업등 기자재의 [사후환급 / 영세율TI 수취] 대상이 분류됩니다.")
 
