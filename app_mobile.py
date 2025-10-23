@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-import requests, base64
+import requests
 from io import BytesIO
 
 # ==============================
@@ -9,8 +9,8 @@ from io import BytesIO
 # ==============================
 st.set_page_config(
     page_title="영세율 판별 검색 도구",
-    layout="centered",                 # ✅ 모바일에서도 보기 편한 폭
-    initial_sidebar_state="collapsed"  # ✅ 사이드바 기본 접기
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 # 글로벌 CSS (폰트/버튼/입력창 크게)
@@ -27,33 +27,16 @@ st.title("영세율 판별 검색 도구")
 st.caption("키워드를 입력하면 해당 품목과 분류(사후환급신청 / 영세율TI 수취)를 찾아줍니다.")
 
 # ==============================
-# 데이터 로딩 유틸
+# 데이터 로딩 유틸 (UI 미노출 - 자동 로드)
 # ==============================
+RAW_URL = "https://raw.githubusercontent.com/yasci78-hue/20251020-python-income-tax/main/%EC%98%81%EC%84%B8%EC%9C%A8%ED%8C%90%EB%B3%84.xlsx"
+
 @st.cache_data(show_spinner=False)
 def load_excel_from_raw_url(raw_url: str):
     resp = requests.get(raw_url, timeout=30)
     resp.raise_for_status()
+    # openpyxl 엔진은 설치가 필요합니다 (requirements.txt에 openpyxl 추가)
     return pd.read_excel(BytesIO(resp.content), engine="openpyxl")
-
-@st.cache_data(show_spinner=False)
-def load_excel_local(fileobj_or_path):
-    try:
-        return pd.read_excel(fileobj_or_path, sheet_name=0, engine="openpyxl")
-    except ImportError:
-        st.error("엑셀(.xlsx) 읽기에는 openpyxl이 필요합니다. requirements.txt에 openpyxl을 추가하세요.")
-        raise
-
-@st.cache_data(show_spinner=False)
-def load_excel_from_private_repo(owner:str, repo:str, path:str, ref:str="main"):
-    token = st.secrets.get("github", {}).get("token")
-    if not token:
-        raise RuntimeError("secrets에 [github][token]이 없습니다. App settings → Secrets에 token을 추가하세요.")
-    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={ref}"
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
-    r = requests.get(url, headers=headers, timeout=30)
-    r.raise_for_status()
-    content = base64.b64decode(r.json()["content"])
-    return pd.read_excel(BytesIO(content), engine="openpyxl")
 
 def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     cols = list(df.columns)
@@ -83,52 +66,14 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     return df[["품목", "구분"]]
 
 # ==============================
-# 데이터 소스 선택 (모바일 친화: selectbox)
+# 데이터 로드 (자동)
 # ==============================
-source = st.selectbox(
-    "데이터 불러오기 방식",
-    ["GitHub raw URL (공개)", "로컬 업로드", "GitHub API (비공개)"],
-    index=0
-)
-
-df = None
-
-if source == "GitHub raw URL (공개)":
-    raw_url = st.text_input("raw.githubusercontent.com 링크", value="https://raw.githubusercontent.com/yasci78-hue/20251020-python-income-tax/main/%EC%98%81%EC%84%B8%EC%9C%A8%ED%8C%90%EB%B3%84.xlsx")
-    if raw_url:
-        with st.spinner("GitHub에서 데이터 로드 중..."):
-            try:
-                df = load_excel_from_raw_url(raw_url)
-                st.success("GitHub raw URL에서 데이터 불러오기 성공!")
-            except Exception as e:
-                st.error(f"데이터 로드 실패: {e}")
-
-elif source == "로컬 업로드":
-    uploaded = st.file_uploader("엑셀 파일 업로드 (.xlsx)", type=["xlsx"])
-    if uploaded is not None:
-        with st.spinner("파일 로드 중..."):
-            try:
-                df = load_excel_local(uploaded)
-                st.success("업로드한 파일을 사용 중입니다.")
-            except Exception as e:
-                st.error(f"엑셀 읽기 실패: {e}")
-
-else:  # GitHub API (비공개)
-    owner = st.text_input("Owner", value="")
-    repo  = st.text_input("Repo", value="")
-    path  = st.text_input("Path (예: data/영세율판별.xlsx)", value="영세율판별.xlsx")
-    ref   = st.text_input("Branch/Tag", value="main")
-    if owner and repo and path and st.button("불러오기"):
-        with st.spinner("비공개 저장소에서 데이터 로드 중..."):
-            try:
-                df = load_excel_from_private_repo(owner, repo, path, ref)
-                st.success("GitHub 비공개 저장소(API)에서 로드 완료")
-            except Exception as e:
-                st.error(f"비공개 저장소 로드 실패: {e}")
-
-# 데이터가 없으면 중단
-if df is None:
-    st.stop()
+with st.spinner("데이터 로드 중..."):
+    try:
+        df = load_excel_from_raw_url(RAW_URL)
+    except Exception as e:
+        st.error(f"데이터 로드 실패: {e}")
+        st.stop()
 
 # 표준화
 try:
@@ -138,7 +83,7 @@ except Exception as e:
     st.stop()
 
 # ==============================
-# 검색 UI (모바일: 한 줄에 하나씩 배치)
+# 검색 UI
 # ==============================
 query = st.text_input("검색어 입력 (쉼표로 여러 개, 예: 소독기, 필름, 펌프)", value="")
 mode_and_or = st.radio("검색 방식", ["AND", "OR"], index=0, horizontal=True)
@@ -165,7 +110,7 @@ def search(df, q, case_sensitive=False, mode="AND"):
 results = search(df, query, case_sensitive=case_sensitive, mode=mode_and_or)
 
 # ==============================
-# 결과 표시 (모바일: 단일 컬럼, 표는 컨테이너 너비 사용)
+# 결과 표시
 # ==============================
 st.subheader("검색 결과")
 st.dataframe(results, use_container_width=True, height=360)
@@ -173,7 +118,7 @@ st.dataframe(results, use_container_width=True, height=360)
 with st.expander("분류별 개수 보기"):
     st.dataframe(results["구분"].value_counts(dropna=False).rename("건수").to_frame(), use_container_width=True)
 
-# 다운로드 버튼 (가로 100%)
+# 다운로드 버튼
 def to_csv_bytes(dataframe: pd.DataFrame) -> bytes:
     return dataframe.to_csv(index=False).encode("utf-8-sig")
 
@@ -184,4 +129,4 @@ st.download_button(
     mime="text/csv"
 )
 
-st.caption("데이터 출처(기본): GitHub raw URL - https://raw.githubusercontent.com/yasci78-hue/20251020-python-income-tax/main/%EC%98%81%EC%84%B8%EC%9C%A8%ED%8C%90%EB%B3%84.xlsx")
+st.caption("데이터는 고정된 GitHub raw URL에서 자동 로드됩니다.")
