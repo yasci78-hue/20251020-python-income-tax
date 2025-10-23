@@ -23,7 +23,7 @@ input[type=text], textarea, .stTextInput input { font-size: 16px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.caption("별표 글씨가 보입니까? 안경 벗는다고 보입니까?")
+st.caption("별표 글씨가 보입니까? 안경 벗는다고 보입니까? 그냥 여기 검색하이소!")
 st.subheader("of the 노안, by the 노안, for the 노안")
 st.title("영세율 판별 도구")
 st.caption("키워드 입력시 농업등 기자재의 [사후환급 / 영세율TI 수취] 대상이 분류됩니다.")
