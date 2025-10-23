@@ -14,17 +14,28 @@ st.caption("AI에게 물어보세요 — 기자재 영세율 관련 검색, 설�
 # ----------------------------
 # 데이터 불러오기 (자동)
 # ----------------------------
-DATA_URL = "https://raw.githubusercontent.com/yasci78-hue/20251020-python-income-tax/main/영세율_기자재_DB.xlsx"
+# --- 상단 imports에 추가 ---
+import requests, io
+from urllib.parse import quote
+
+# --- 데이터 로더 교체 ---
+DATA_BASE = "https://raw.githubusercontent.com/yasci78-hue/20251020-python-income-tax/main/"
+DATA_FILE = "영세율_기자재_DB.xlsx"  # 한글 파일명
 
 @st.cache_data
 def load_data():
-    return pd.read_excel(DATA_URL)
+    # 1) 파일명만 URL 인코딩
+    url = DATA_BASE + quote(DATA_FILE)
 
-try:
-    df = load_data()
-except Exception as e:
-    st.error(f"데이터 로드 실패: {e}")
-    st.stop()
+    # 2) 바이트로 받아서 엑셀 파싱
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()  # 200 아니면 예외
+    data_bytes = io.BytesIO(resp.content)
+
+    # 3) openpyxl 엔진으로 읽기
+    df = pd.read_excel(data_bytes, engine="openpyxl")
+    return df
+
 
 # ----------------------------
 # 검색 함수
