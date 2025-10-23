@@ -24,7 +24,7 @@ input[type=text], textarea, .stTextInput input { font-size: 16px !important; }
 """, unsafe_allow_html=True)
 
 st.caption("언제까지 별표의 작은 글씨를 노려볼 것인가? 누진다초점 렌즈가 필요한가?")
-st.subtitle("노안의 그대를 위한")
+st.subheader("노안의 그대를 위한")
 st.title("영세율 판별 도구")
 st.caption("키워드 입력시 농업등 기자재의 [사후환급 / 영세율TI 수취] 대상이 분류됩니다.")
 
